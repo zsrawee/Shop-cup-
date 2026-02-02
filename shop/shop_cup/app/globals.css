@@ -1,0 +1,139 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Minimal custom CSS — Tailwind handles layout and most styles */
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Optional helper: a small gold accent class if you need it */
+.gold-section {
+  background: linear-gradient(135deg, #d4af37 0%, #ffd700 35%, #fff1b5 100%);
+}
+
+
+/* --- Additional CSS for current plain markup (no HTML changes) --- */
+
+/* Apply golden header style to the first <section> */
+section {
+  background: linear-gradient(135deg, #d4af37 0%, #ffd700 35%, #fff1b5 100%);
+  color: #1a1a1a;
+  padding: 1.25rem;
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(212,175,55,0.18), inset 0 -3px 8px rgba(255,255,255,0.25);
+  border: 1px solid rgba(212,175,55,0.22);
+  margin-bottom: 1rem;
+}
+
+/* Treat the first div after the section as a left sidebar (search area) */
+section + div {
+  float: left;
+  width: 260px;
+  box-sizing: border-box;
+  padding: 1rem;
+  background: rgba(255,255,255,0.02);
+  border-radius: 8px;
+  margin-right: 1rem;
+}
+
+section + div input[type="search"] {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.08);
+}
+
+/* The div after the search block becomes the horizontal ads row */
+section + div + div {
+  margin-left: 280px; /* leave space for the left sidebar */
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  overflow-x: auto;
+  padding: 0.75rem 1rem;
+  background: linear-gradient(90deg, #fff, #fff7e0);
+  border-radius: 8px;
+  border: 1px solid rgba(0,0,0,0.04);
+  margin-bottom: 1rem;
+}
+
+/* The final div is the products area which should take remaining width */
+section + div + div + div {
+  margin-left: 280px;
+  padding: 1rem;
+  box-sizing: border-box;
+}
+
+/* Simple ad/item and product styling to improve readability */
+section + div + div .ad {
+  min-width: 220px;
+  padding: 0.75rem;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.9);
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+section + div + div + div > * {
+  background: #ffffff;
+  padding: 0.75rem;
+  border-radius: 8px;
+  display: inline-block;
+  margin-right: 0.75rem;
+}
+
+/* Responsive fallback: stack elements vertically on narrow screens */
+@media (max-width: 768px) {
+  section + div,
+  section + div + div,
+  section + div + div + div {
+    float: none;
+    margin-left: 0;
+    width: 100%;
+  }
+  section + div {
+    display: block;
+  }
+  section + div + div {
+    overflow-x: auto;
+  }
+}
