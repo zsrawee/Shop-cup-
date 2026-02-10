@@ -1,8 +1,5 @@
-'use client';
-import ProductList from './API/product';
-import NavBar from './navBar/navBar';
-
-
+import ProductList from "../API/product";
+import NavBar from "../navBar/navBar";
 export default function Home() {
   return (
     <>
@@ -18,4 +15,3 @@ export default function Home() {
     </>
   );
 }
-

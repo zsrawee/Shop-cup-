@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
+
 export default function NavBar() {
+   
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
