@@ -1,5 +1,5 @@
 import { connectToDB } from "@/lib/db";
-import User from "@/models/User";
+import {User} from "@/models/User";
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { RegisterSchema } from "@/lib/validations";

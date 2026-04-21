@@ -1,4 +1,4 @@
-import NavBar from "../../components/navBar";
+import NavBar from "../navBar/navBar";
 
 export default function AboutPage() {
   return (
@@ -26,7 +26,7 @@ export default function AboutPage() {
 
       <section>
         <h2>Contact</h2>
-        <p>Questions? Email <a href="shopCut@example.com">hello@example.com</a> or use our contact form. We're happy to help!</p>
+        <p>Questions? Email <a href="mailto:hello@example.com">hello@example.com</a> or use our contact form. We're happy to help!</p>
       </section>
 
     </main>

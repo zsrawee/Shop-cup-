@@ -1,17 +1,38 @@
-import ProductList from "../../components/product";
-import NavBar from "../../components/navBar";
-export default function Home() {
-  return (
-    <>
-      <NavBar />
+// app/products/page.tsx
+'use client';
 
-      <div className="max-w-7xl mx-auto px-4 md:px-8">
-        <h1 className="mt-8 text-2xl font-bold">Ads product</h1>
-        <div className=" "><h1>product</h1>
-        <ProductList/>
-        
-          </div>
-      </div>
-    </>
+import { useProducts } from '@/lib/api/products';
+
+export default function ProductsPage() {
+  const { data: products, isLoading, isError, error } = useProducts();
+
+  // 1. Handle Loading State
+  if (isLoading) {
+    return <div>Loading products...</div>;
+  }
+
+  // 2. Handle Error State
+  if (isError) {
+    return <div>Error: {error.message}</div>;
+  }
+
+  // 3. Handle Empty State
+  if (!products || products.length === 0) {
+    return <div>No products found.</div>;
+  }
+
+  // 4. Render Data
+  return (
+    <div>
+      <h1>Products</h1>
+      <ul>
+        {products.map((product) => (
+          <li key={product.id}>
+            <h2>{product.title}</h2>
+            <p>${product.price}</p>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
