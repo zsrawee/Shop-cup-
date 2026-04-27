@@ -1,20 +1,21 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import React, { useState, useTransition, ChangeEvent } from "react";
 import { changeName, changeDesc, changeImage } from "@/actions/profileActions";
-import Link from "next/link";
+import { compressImage } from "@/lib/compressImage";
+import { uploadImageToCloud } from "@/lib/uploadImage";
 
-// تعريف نوع المستخدم (عدّله حسب الهيكل الفعلي لقاعدة البيانات)
+// تعريف نوع المستخدم (يجب أن يتطابق مع البيانات القادمة)
 interface User {
-  _id: string | { toString(): string };
+  _id: { toString(): string } | string;
   name: string;
   avatar?: string | null;
   sellerInfo?: {
     description?: string;
-  };
+  } | null;
 }
 
-// تعريف نوع لدوال الإجراءات (actions)
+// تعريف نوع دالة الإجراء
 type ProfileAction = (id: string, value: string) => Promise<void>;
 
 export default function ProfileEditor({ user }: { user: User }) {
@@ -23,15 +24,37 @@ export default function ProfileEditor({ user }: { user: User }) {
   const [name, setName] = useState(user.name);
   const [desc, setDesc] = useState(user.sellerInfo?.description ?? "");
   const [avatar, setAvatar] = useState(user.avatar ?? "");
+  const [isUploading, setIsUploading] = useState(false);
 
   const [editingField, setEditingField] = useState<string | null>(null);
 
+  // ✅ دالة حفظ أي حقل (الاسم أو الوصف)
   const handleSave = (action: ProfileAction, value: string) => {
     startTransition(async () => {
       const userId = typeof user._id === "string" ? user._id : user._id.toString();
       await action(userId, value);
       setEditingField(null);
     });
+  };
+
+  // ✅ دالة رفع الصورة
+  const handleImageChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const compressedFile = await compressImage(file);
+      const imageUrl = await uploadImageToCloud(compressedFile);
+      setAvatar(imageUrl);
+      const userId = typeof user._id === "string" ? user._id : user._id.toString();
+      await changeImage(userId, imageUrl);
+    } catch (error) {
+      alert("حدث خطأ أثناء رفع الصورة");
+    } finally {
+      setIsUploading(false);
+      setEditingField(null);
+    }
   };
 
   return (
@@ -42,33 +65,23 @@ export default function ProfileEditor({ user }: { user: User }) {
       <div className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl">
         <div className="w-16 h-16 rounded-full bg-blue-600 flex items-center justify-center text-white font-bold overflow-hidden">
           {avatar ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img src={avatar} alt="avatar" className="w-full h-full object-cover" />
           ) : (
             name.charAt(0)
           )}
         </div>
-        {editingField === "image" ? (
-          <div className="flex gap-2 flex-1">
-            <input
-              type="text"
-              value={avatar}
-              onChange={(e) => setAvatar(e.target.value)}
-              placeholder="رابط الصورة الجديد"
-              className="flex-1 border border-gray-300 p-2 rounded-lg text-sm bg-white text-gray-900 placeholder:text-gray-400"
-            />
-            <button
-              onClick={() => handleSave(changeImage, avatar)}
-              disabled={isPending}
-              className="bg-blue-600 text-white px-3 py-1 rounded-lg text-sm"
-            >
-              {isPending ? "جاري..." : "حفظ"}
-            </button>
-          </div>
-        ) : (
-          <button onClick={() => setEditingField("image")} className="text-blue-600 text-sm font-semibold mr-auto">
-            تغيير الصورة 📷
-          </button>
-        )}
+
+        <label className="cursor-pointer bg-blue-600 text-white px-4 py-2 rounded-xl text-sm font-semibold hover:bg-blue-700 transition">
+          {isUploading ? "جاري الضغط والرفع..." : "تغيير الصورة 📷"}
+          <input
+            type="file"
+            accept="image/*"
+            onChange={handleImageChange}
+            className="hidden"
+            disabled={isUploading}
+          />
+        </label>
       </div>
 
       {/* تعديل الاسم */}

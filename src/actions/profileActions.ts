@@ -8,13 +8,12 @@ export async function changeName(userId: string, newName: string) {
   if (!newName || newName.trim() === "") throw new Error("الاسم مطلوب");
   await connectToDB();
   await User.findByIdAndUpdate(userId, { name: newName.trim() });
-  revalidatePath("/profile"); // تحديث الكاش لكي يتغير الاسم فوراً في الواجهة
+  revalidatePath("/profile"); // تحديث صفحات البروفايل
 }
 
 export async function changeDesc(userId: string, newDesc: string) {
   await connectToDB();
-  // ملاحظة: إذا الوصف خاص بالبائع فقط نحدث sellerInfo.description
-  // وإذا أضفت حقل description في الـ Schema الأساسي نستخدمه
+  // تحديث حقل الوصف داخل كائن sellerInfo
   await User.findByIdAndUpdate(userId, { "sellerInfo.description": newDesc.trim() });
   revalidatePath("/profile");
 }

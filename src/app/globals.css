@@ -45,3 +45,7 @@ body {
   flex-wrap: wrap;
   gap: 1.5rem;
 }
+* {
+  box-sizing: border-box;
+  color: red;
+}

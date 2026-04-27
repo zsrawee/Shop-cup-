@@ -6,12 +6,11 @@ import { User } from "@/models/User";
 import { redirect } from "next/navigation";
 
 export async function addProduct(formData: FormData) {
-  // 1. استخراج البيانات من النموذج
+  // 1. استخراج البيانات الأساسية من النموذج
   const title = formData.get("title") as string;
   const description = formData.get("description") as string;
   const price = parseFloat(formData.get("price") as string);
   const stock = parseInt(formData.get("stock") as string);
-  const imagesString = formData.get("images") as string;
   const sellerId = formData.get("sellerId") as string;
 
   // التحقق الأساسي
@@ -19,12 +18,11 @@ export async function addProduct(formData: FormData) {
     throw new Error("الاسم والسعر ومعلومات البائع مطلوبة");
   }
 
-  // 2. تحويل نص روابط الصور إلى مصفوفة (Array)
-  const images = imagesString 
-    ? imagesString.split(",").map((img) => img.trim()).filter((img) => img !== "") 
-    : [];
+  // 2. ✅ استخراج الصور (التعديل الجديد)
+  // نستخدم getAll لأننا نرسل عدة روابط بنفس الاسم "images" من الـ Client
+  const images = formData.getAll("images") as string[];
 
-  // 3. الاتصال بقاعدة البيانات وحفظ المنتج
+  // 3. حفظ المنتج في قاعدة البيانات
   await connectToDB();
   
   await Product.create({
@@ -32,16 +30,16 @@ export async function addProduct(formData: FormData) {
     description,
     price,
     stock,
-    images,
-    seller: sellerId, // ✅ الربط بالبائع باستخدام الـ ID المخفي
+    images, // يتم تمرير المصفوفة مباشرة ["https://...", "https://..."]
+    seller: sellerId, 
   });
 
-  // 4. جلب اسم المستخدم (username) لنوجهه لبروفايله مباشرة
+  // 4. جلب اسم المستخدم لتحويله لبروفايله بعد الإضافة
   const user = await User.findById(sellerId);
   
   if (user) {
     redirect(`/profile/${user.username}`);
   } else {
-    redirect(`/`); // احتياط
+    redirect(`/`); 
   }
 }
