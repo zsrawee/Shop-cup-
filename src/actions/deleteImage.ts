@@ -2,34 +2,45 @@
 
 import fs from "fs/promises";
 import path from "path";
+import { v2 as cloudinary } from "cloudinary";
 
 export async function deleteImageFromServer(imageUrl: string) {
-  // 1. تأكد أن الرابط يبدأ بـ /imag/ (إجراء أمني لمنع حذف ملفات النظام)
-  if (!imageUrl || !imageUrl.startsWith("/imag/")) {
-    console.log("تم تجاهل حذف الصورة: الرابط غير صالح أو خارج النطاق");
-    return { success: false, message: "رابط الصورة غير صالح" };
-  }
+  if (!imageUrl) return { success: false, message: "لا يوجد رابط" };
 
   try {
-    // 2. تحويل الرابط النسبي إلى مسار فعلي على القرص
-    const absolutePath = path.join(process.cwd(), "public", imageUrl);
-
-    // 3. محاولة حذف الملف
-    await fs.unlink(absolutePath);
-    return { success: true };
-  } catch (error: unknown) {
-    // التحقق من وجود الخطأ "ENOENT" (الملف غير موجود)
-    if (
-      error &&
-      typeof error === "object" &&
-      "code" in error &&
-      error.code === "ENOENT"
-    ) {
-      console.warn("الصورة غير موجودة بالفعل:", imageUrl);
-      return { success: true, message: "الصورة غير موجودة أصلاً" };
+    // 1. إذا كانت الصورة من Cloudinary ☁️
+    if (imageUrl.includes("cloudinary.com")) {
+      const parts = imageUrl.split("/upload/");
+      if (parts.length >= 2) {
+        let pathPart = parts[1];
+        if (pathPart.match(/^v\d+\//)) {
+          pathPart = pathPart.replace(/^v\d+\//, "");
+        }
+        const publicId = pathPart.split(".")[0];
+        
+        await cloudinary.uploader.destroy(publicId);
+        return { success: true };
+      }
     }
 
+    // 2. إذا كانت الصورة محلية (مسار قديم يبدأ بـ /imag/)
+    if (imageUrl.startsWith("/imag/")) {
+      const absolutePath = path.join(process.cwd(), "public", imageUrl);
+      
+      try {
+        await fs.unlink(absolutePath);
+        return { success: true };
+      } catch (error: any) {
+        if (error.code === "ENOENT") {
+          return { success: true, message: "Цالصورة غير موجودة أصلاً" };
+        }
+        throw error;
+      }
+    }
+
+    return { success: false, message: "رابط الصورة غير مدعوم" };
+  } catch (error) {
     console.error("خطأ أثناء حذف الصورة:", error);
-    return { success: false, message: "فشل حذف الصورة من السيرفر" };
+    return { success: false, message: "فشل حذف الصورة" };
   }
 }

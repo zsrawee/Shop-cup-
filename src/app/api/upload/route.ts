@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { writeFile, mkdir } from "fs/promises";
-import path from "path";
+import { v2 as cloudinary } from "cloudinary";
 
 export async function POST(request: Request) {
   try {
@@ -14,23 +13,17 @@ export async function POST(request: Request) {
     // تحويل الملف إلى Buffer لحفظه
     const buffer = Buffer.from(await file.arrayBuffer());
 
-    // إنشاء اسم فريد للملف لمنع التكرار باستخدام الوقت
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const filename = uniqueSuffix + '-' + file.name.replace(/\s/g, '_');
-
-    // تحديد المسار الفعلي داخل مجلد public/imag في المشروع
-    const dirPath = path.join(process.cwd(), "public/imag");
-    
-    // التأكد من أن المجلد موجود، إذا لم يكن موجوداً يتم إنشاؤه
-    await mkdir(dirPath, { recursive: true });
-
-    const filePath = path.join(dirPath, filename);
-
-    // حفظ الملف فعلياً في القرص الصلب
-    await writeFile(filePath, buffer);
-
-    // الرابط الذي سيتم حفظه في قاعدة البيانات وإرجاعه للواجهة
-    const imageUrl = `/imag/${filename}`;
+    // الرفع عبر Stream إلى Cloudinary
+    const imageUrl = await new Promise<string>((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        { folder: "shop_cup" },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result!.secure_url);
+        }
+      );
+      uploadStream.end(buffer);
+    });
 
     return NextResponse.json({ url: imageUrl });
 
