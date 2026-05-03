@@ -1,112 +1,155 @@
-// app/products/[id]/page.tsx
+import { connectToDB } from "@/lib/db";
+import { Product } from "@/models/Product";
+import { User } from "@/models/User";
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import ProductActions from "@/components/ProductActions";
+ // أزرار السلة والمفضلة
 
-import { notFound } from 'next/navigation';
+export default async function ProductDetails({ params }) {
+  // في إصدارات Next.js الحديثة يجب استخدام await مع params
+  const { id } = await params;
 
-export default async function ProductPage({ params }) {
-  // 1. فك تشفير الـ params (ضروري جداً)
-  const resolvedParams = await params;
-  const id = resolvedParams.id;
+  await connectToDB();
 
-  let product;
+  // نجلب المنتج بناءً على الـ ID، ونستخدم populate لجلب بيانات البائع
+  const product = await Product.findById(id).populate("seller").lean();
 
-  try {
-    // 2. جلب البيانات من الـ API
-    const res = await fetch(`https://fakestoreapi.com/products/${id}`);
-
-    if (!res.ok) {
-      return ; // إذا لم ينجح الطلب، اذهب لصفحة 404 بدلاً من كسر السيرفر
-    }
-
-    // 3. إضافة await هنا (هذا هو الخطأ الأساسي في كودك)
-    product = await res.json();
-
-    // إذا رجعت الـ API بيانات فارغة
-    if (!product || Object.keys(product).length === 0) {
-      return notFound();
-    }
-  } catch (error) {
-    console.error("Fetch error:", error);
-    return notFound();
+  // إذا لم يتم العثور على المنتج، نعرض صفحة 404
+  if (!product) {
+    console.error(`Product with ID  not found.`);
+    notFound();
   }
 
-  // الآن الكود سيعمل لأن product أصبح يحتوي على البيانات فعلياً
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black text-white">
-      <div className="container mx-auto px-4 py-12">
-        <header className="mb-12 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">
-            <span className="bg-gradient-to-r from-yellow-400 to-yellow-600 bg-clip-text text-transparent">
-              Luxury Store
-            </span>
-          </h1>
-          <p className="text-gray-400 italic">Where Elegance Meets Quality</p>
-        </header>
+  // تحويل كائن البائع لنوع مناسب للاستخدام
+  const seller = product.seller;
 
-        <div className="max-w-6xl mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-start">
-            <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-yellow-600 to-yellow-900 rounded-3xl blur opacity-25 group-hover:opacity-40 transition duration-1000"></div>
-              <div className="relative bg-black rounded-2xl p-6 border border-yellow-800/30">
-                <img
-                  src={product.image}
-                  alt={product.title}
-                  className="w-full h-96 object-contain rounded-xl transition-transform duration-500 hover:scale-105"
-                />
-                <div className="absolute top-6 right-6 bg-gradient-to-r from-yellow-700 to-yellow-900 text-yellow-100 font-bold py-2 px-4 rounded-full shadow-lg">
-                  <span className="text-2xl">${product.price}</span>
-                </div>
+  return (
+    <div className="min-h-screen bg-gray-50 py-10" dir="rtl">
+      <div className="max-w-6xl mx-auto px-4">
+        
+        {/* زر العودة للمتجر */}
+        <Link href="/products" className="text-blue-600 hover:underline mb-6 inline-block font-semibold">
+          ← العودة لجميع المنتجات
+        </Link>
+
+        <div className="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-0">
+            
+            {/* === القسم الأيمن: صور المنتج === */}
+            <div className="p-6 bg-gray-50 flex flex-col items-center justify-center">
+              <div className="w-full max-w-md aspect-square bg-white rounded-2xl overflow-hidden border shadow-sm mb-4">
+                {/* الصورة الرئيسية (هنا نعرض الصورة الأولى كصورة أساسية) */}
+                {product.images && product.images.length > 0 ? (
+                  <img 
+                    src={product.images[0]} 
+                    alt={product.title} 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-gray-300 text-6xl">📸</div>
+                )}
               </div>
+              
+              {/* معاينة الصور المصغرة (إذا كان هناك أكثر من صورة) */}
+              {product.images && product.images.length > 1 && (
+                <div className="flex gap-2 mt-4">
+                  {product.images.map((img, idx) => (
+                    <div key={idx} className="w-16 h-16 rounded-xl overflow-hidden border-2 border-blue-500 cursor-pointer">
+                      <img src={img} alt={`product-${idx}`} className="w-full h-full object-cover" />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
 
-            <div className="space-y-8">
-              <div>
-                <div className="mb-4">
-                  <span className="inline-block bg-yellow-900/30 text-yellow-400 text-sm font-semibold px-4 py-2 rounded-full border border-yellow-700/50">
-                    {product.category}
+            {/* === القسم الأيسر: تفاصيل المنتج === */}
+            <div className="p-8 flex flex-col">
+              <h1 className="text-3xl font-extrabold text-gray-900 mb-2">{product.title}</h1>
+              
+              {/* تقييم المنتج */}
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-yellow-500 text-lg">⭐</span>
+                <span className="font-bold text-gray-800">{product.averageRating || 0}</span>
+                <span className="text-gray-400 text-sm">({product.numberOfReviews} تقييم)</span>
+              </div>
+
+              {/* سعر المنتج */}
+              <div className="mb-6">
+                <span className="text-4xl font-extrabold text-blue-600">${product.price}</span>
+              </div>
+
+              {/* حالة المخزون */}
+              <div className="mb-6">
+                {product.stock > 0 ? (
+                  <span className="bg-green-100 text-green-800 text-sm font-semibold px-3 py-1 rounded-full">
+                    متوفر في المخزون ({product.stock} قطعة)
                   </span>
+                ) : (
+                  <span className="bg-red-100 text-red-800 text-sm font-semibold px-3 py-1 rounded-full">
+                    نفذ من المخزون ❌
+                  </span>
+                )}
+              </div>
+
+              {/* وصف المنتج */}
+              <div className="mb-8 flex-1">
+                <h3 className="font-bold text-gray-800 mb-2">وصف المنتج</h3>
+                <p className="text-gray-600 leading-relaxed whitespace-pre-line">{product.description}</p>
+              </div>
+
+              {/* أزرار الإجراءات (السلة والمفضلة) - تستخدم المكون الذي أنشأناه سابقاً */}
+              {product.stock > 0 && (
+                <div className="mb-6">
+                  <ProductActions productId={product._id.toString()} />
                 </div>
-                <h2 className="text-3xl md:text-4xl font-bold mb-4 leading-tight">
-                  <span className="bg-gradient-to-r from-yellow-300 to-yellow-500 bg-clip-text text-transparent">
-                    {product.title}
-                  </span>
-                </h2>
-                <div className="flex items-center space-x-4 mb-6">
-                  <div className="flex items-center">
-                    {[...Array(5)].map((_, i) => (
-                      <svg
-                        key={i}
-                        className={`w-6 h-6 ${i < Math.floor(product.rating?.rate || 0) ? 'text-yellow-500' : 'text-gray-600'}`}
-                        fill="currentColor"
-                        viewBox="0 0 20 20"
-                      >
-                        <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                      </svg>
-                    ))}
-                    <span className="ml-2 text-yellow-400 font-semibold">
-                      {product.rating?.rate} <span className="text-gray-400">({product.rating?.count} reviews)</span>
-                    </span>
+              )}
+
+              {/* معلومات البائع */}
+              {seller && (
+                <div className="border-t pt-6 mt-auto">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold overflow-hidden">
+                      {seller.avatar ? (
+                        <img src={seller.avatar} alt={seller.name} className="w-full h-full object-cover" />
+                      ) : (
+                        seller.name.charAt(0)
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">يباع بواسطة</p>
+                      <Link href={`/profile/${seller.username}`} className="font-bold text-gray-900 hover:text-blue-600 transition">
+                        {seller.sellerInfo?.storeName || seller.name}
+                      </Link>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
-              <div className="bg-gradient-to-b from-gray-900/50 to-black/50 p-6 rounded-2xl border border-yellow-900/30">
-                <h3 className="text-xl font-bold mb-4 text-yellow-300 flex items-center">
-                  <span className="mr-2">ⓘ</span> Product Description
-                </h3>
-                <p className="text-gray-300 leading-relaxed text-lg">{product.description}</p>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                <button className="flex-1 bg-gradient-to-r from-yellow-600 to-yellow-800 hover:from-yellow-700 hover:to-yellow-900 text-white font-bold py-4 px-6 rounded-xl transition-all duration-300 transform hover:scale-[1.02] shadow-lg shadow-yellow-900/30">
-                  Add to Cart
-                </button>
-                <button className="flex-1 bg-transparent hover:bg-yellow-900/20 text-yellow-400 font-bold py-4 px-6 rounded-xl border-2 border-yellow-700/50 transition-all duration-300 transform hover:scale-[1.02]">
-                  Add to Wishlist
-                </button>
-              </div>
             </div>
           </div>
         </div>
+
+        {/* === قسم التقييمات (مكان مخصص لإضافة التقييمات لاحقاً) === */}
+        <div className="mt-10 bg-white rounded-3xl shadow-sm border border-gray-100 p-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">تقييمات العملاء</h2>
+          {product.ratings && product.ratings.length > 0 ? (
+            <div className="space-y-4">
+              {product.ratings.map((review, idx) => (
+                <div key={idx} className="border-b pb-4 last:border-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-bold text-gray-800">{review.userName}</span>
+                    <span className="text-yellow-500 text-sm">⭐ {review.rating}</span>
+                  </div>
+                  <p className="text-gray-600 text-sm">{review.comment}</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-gray-400 text-center py-8">لا توجد تقييمات بعد. كن أول من يقيّم هذا المنتج!</p>
+          )}
+        </div>
+
       </div>
     </div>
   );

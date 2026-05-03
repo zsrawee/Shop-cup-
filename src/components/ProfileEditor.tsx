@@ -16,7 +16,7 @@ interface User {
 }
 
 // تعريف نوع دالة الإجراء
-type ProfileAction = (id: string, value: string) => Promise<void>;
+type ProfileAction = (value: string) => Promise<void>;
 
 export default function ProfileEditor({ user }: { user: User }) {
   const [isPending, startTransition] = useTransition();
@@ -31,8 +31,7 @@ export default function ProfileEditor({ user }: { user: User }) {
   // ✅ دالة حفظ أي حقل (الاسم أو الوصف)
   const handleSave = (action: ProfileAction, value: string) => {
     startTransition(async () => {
-      const userId = typeof user._id === "string" ? user._id : user._id.toString();
-      await action(userId, value);
+      await action(value);
       setEditingField(null);
     });
   };
@@ -47,8 +46,7 @@ export default function ProfileEditor({ user }: { user: User }) {
       const compressedFile = await compressImage(file);
       const imageUrl = await uploadImageToCloud(compressedFile);
       setAvatar(imageUrl);
-      const userId = typeof user._id === "string" ? user._id : user._id.toString();
-      await changeImage(userId, imageUrl);
+      await changeImage(imageUrl);
     } catch (error) {
       alert("حدث خطأ أثناء رفع الصورة");
     } finally {

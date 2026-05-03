@@ -12,7 +12,8 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         await connectToDB();
         
         // 1. البحث عن المستخدم بالإيميل
-        const user = await User.findOne({ email: credentials.email });
+        const email = credentials?.email as string;
+        const user = await User.findOne({ email });
         if (!user) throw new Error("المستخدم غير موجود");
 
         // 2. التحقق من الباسورد (مقارنة المشفر)

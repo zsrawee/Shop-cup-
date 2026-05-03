@@ -25,7 +25,6 @@ export default async function SellerChangePage() {
         
         {/* نمرر الـ ID والدور الحالي من قاعدة البيانات */}
         <SellerChangeForm 
-          userId={user._id.toString()} 
           currentRole={user.role} 
         />
       </div>

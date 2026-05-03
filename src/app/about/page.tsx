@@ -1,10 +1,6 @@
-import NavBar from "../../components/navBar";
-
 export default function AboutPage() {
   return (
-    
     <main style={{ padding: '2rem', margin: '0 auto', lineHeight: 1.6 }}>
-      <NavBar />
       <h1>About the Store</h1>
 
       <p><strong>Welcome!</strong> We're a small team curating high-quality cups & accessories for everyday moments.</p>

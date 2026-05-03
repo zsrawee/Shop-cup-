@@ -1,71 +1,156 @@
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { useState } from 'react';
+import Link from "next/link";
+import { useApp } from "@/context/AppContext";
+import { useState } from "react";
+import { usePathname } from "next/navigation";
 
+export default function Navbar({ 
+  isLoggedIn, 
+  username, 
+  role 
+}: { 
+  isLoggedIn: boolean; 
+  username: string; 
+  role: string; 
+}) {
+  const { cartCount, wishlistCount } = useApp();
+  const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+  const pathname = usePathname();
 
-export default function NavBar() {
-   
-  const [mobileOpen, setMobileOpen] = useState(false);
+  // ✅ روابط المتجر الأساسية (تظهر للجميع)
+  const storeLinks = [
+    { href: "/products", label: "المنتجات", icon: "🛍️" },
+    { href: "/cart", label: "السلة", icon: "🛒", badge: cartCount },
+    { href: "/orders", label: "طلباتي", icon: "📦" },
+    { href: "/aaa", label: "teast", icon: "🅰️" }, // الرابط الإضافي
+  ];
+
+  // ✅ روابط المستخدم (تتغير بناءً على تسجيل الدخول والدور)
+  const authLinks = isLoggedIn
+    ? [
+        { href: `/profile/${username}`, label: "البروفايل", icon: "👤" },
+        { href: "/seller/change", label: "البائعين", icon: "🏪" },
+        // يظهر رابط الأدمن فقط إذا كان الدور أدمن
+        ...(role === 'admin' ? [{ href: "/admin", label: "لوحة التحكم", icon: "🛡️" }] : []),
+      ]
+    : [
+        { href: "/login", label: "تسجيل الدخول", icon: "🔑" },
+      ];
+
+  const isActive = (href: string) => pathname === href;
 
   return (
-    <nav className="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-[#d4af37]/25">
-      <div className="max-w-7xl mx-auto flex items-center justify-between py-2 px-4 md:px-8">
-        <div className="flex items-center gap-3 w-full md:w-auto">
-          <Link href="/" className="text-xl md:text-2xl font-extrabold text-[#d4af37]">ShopCup</Link>
+    <nav className="bg-white border-b border-gray-200 sticky top-0 z-50 shadow-sm">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16" dir="rtl">
+          
+          {/* اللوغو */}
+          <Link href="/" className="text-xl font-extrabold text-blue-600">
+            Shop-cup 🚀
+          </Link>
 
-          {/* Mobile inline search (visible on small screens) */}
-          <form className="flex items-center gap-2 md:hidden w-full max-w-xs ml-3" role="search">
-            <label htmlFor="mobile-inline-search" className="sr-only">Search products</label>
-            <input id="mobile-inline-search" name="mobile-inline-search" type="search" placeholder="Search..." className="w-full px-2 py-1 rounded-md border border-[#d4af37]/30 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/60 text-sm bg-black/5 text-white" />
-          </form>
+          {/* روابط الكمبيوتر (مخفية في الجوال) */}
+          <div className="hidden md:flex items-center gap-5">
+            {storeLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`relative flex items-center gap-1 text-sm font-semibold transition ${
+                  isActive(link.href) ? "text-blue-600" : "text-gray-600 hover:text-blue-500"
+                }`}
+              >
+                <span>{link.icon}</span> {link.label}
+                {/* شارة العدد (للسلة والمفضلة) */}
+                {link.badge !== undefined && link.badge > 0 && (
+                  <span className="absolute -top-2 -left-3 bg-red-500 text-white text-[10px] w-4 h-4 flex items-center justify-center rounded-full">
+                    {link.badge}
+                  </span>
+                )}
+              </Link>
+            ))}
 
-          {/* Desktop search */}
-          <form className="hidden md:flex items-center gap-2 ml-4 w-full max-w-[18rem]" role="search">
-            <label htmlFor="nav-search" className="sr-only">Search products</label>
-            <input id="nav-search" name="nav-search" type="search" placeholder="Search products, categories, or brands..." className="w-full px-3 py-2 rounded-md border border-[#d4af37]/30 focus:outline-none focus:ring-2 focus:ring-[#d4af37]/60 bg-black/5 text-white" />
-            <button type="submit" className="px-3 py-2 bg-[#d4af37] hover:bg-[#b58f2a] text-black font-semibold rounded-md transition-colors duration-200">Search</button>
-          </form>
-        </div>
+            {/* فاصل بين روابط المتجر وروابط المستخدم */}
+            <div className="w-px h-6 bg-gray-200"></div>
 
-        <div className="flex items-center gap-4">
-          <div className="hidden md:flex gap-6">
-            <Link href="/" className="text-lg font-medium text-white hover:text-[#d4af37] transition transform duration-150 hover:scale-105 hover:bg-[#d4af37]/8 px-2 rounded-md">Home</Link>
-            <Link href="/products" className="text-lg font-medium text-white hover:text-[#d4af37] transition transform duration-150 hover:scale-105 hover:bg-[#d4af37]/8 px-2 rounded-md">Products</Link>
-            <Link href="/deals" className="text-lg font-medium text-white hover:text-[#d4af37] transition transform duration-150 hover:scale-105 hover:bg-[#d4af37]/8 px-2 rounded-md">Deals</Link>
-            <Link href="/about" className="text-lg font-medium text-white hover:text-[#d4af37] transition transform duration-150 hover:scale-105 hover:bg-[#d4af37]/8 px-2 rounded-md">About</Link>
+            {/* روابط المستخدم (البروفايل/الدخول/الأدمن) */}
+            {authLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`flex items-center gap-1 text-sm font-semibold transition ${
+                  isActive(link.href) ? "text-blue-600" : "text-gray-600 hover:text-blue-500"
+                }`}
+              >
+                <span>{link.icon}</span> {link.label}
+              </Link>
+            ))}
           </div>
 
-          <div className="hidden md:flex items-center gap-3">
-            <Link href="/cart" className="px-4 py-2 bg-transparent text-[#d4af37] border border-[#d4af37]/20 rounded-md transition transform duration-150 hover:scale-105 hover:bg-[#d4af37]/8">Cart</Link>
-            <Link href="/signin" className="px-4 py-2 bg-[#d4af37] text-black rounded-md transition transform duration-150 hover:scale-105 hover:bg-[#b58f2a]">Sign in</Link>
-          </div>
-
-          {/* Mobile More button (toggles menu) */}
-          <button onClick={() => setMobileOpen(!mobileOpen)} aria-expanded={mobileOpen} aria-label={mobileOpen ? 'إغلاق المزيد' : 'المزيد'} className="md:hidden ml-2 p-2 rounded-md border border-[#d4af37]/30 flex items-center gap-2 text-sm text-white transition-colors duration-200 hover:bg-[#d4af37]/8">
-            <span className="text-lg">☰</span>
-            <span className="ml-1">المزيد</span>
+          {/* زر القائمة الجانبية (يظهر فقط في الجوال) */}
+          <button
+            onClick={() => setIsDrawerOpen(true)}
+            className="md:hidden text-gray-600 text-2xl"
+          >
+            ☰
           </button>
         </div>
       </div>
 
-      {/* Mobile menu contains remaining links & actions (visible on small screens when opened) */}
-      <div className={`md:hidden border-t border-[#d4af37]/15 bg-black/95 overflow-hidden transition-all duration-300 ${mobileOpen ? 'max-h-[500px] opacity-100' : 'max-h-0 opacity-0'}`}>
-        <div className="px-4 py-4 space-y-3">
-          <div className="flex flex-col gap-2">
-            <Link href="/" className="py-2 px-3 rounded-md hover:bg-[#d4af37]/8 transition transform duration-150 hover:scale-105 text-white">Home</Link>
-            <Link href="/products" className="py-2 px-3 rounded-md hover:bg-[#d4af37]/8 transition transform duration-150 hover:scale-105 text-white">Products</Link>
-            <Link href="/deals" className="py-2 px-3 rounded-md hover:bg-[#d4af37]/8 transition transform duration-150 hover:scale-105 text-white">Deals</Link>
-            <Link href="/about" className="py-2 px-3 rounded-md hover:bg-[#d4af37]/8 transition transform duration-150 hover:scale-105 text-white">About</Link>
-          </div>
+      {/* === القائمة الجانبية (Drawer) للجوال === */}
+      {isDrawerOpen && (
+        <div className="fixed inset-0 z-50 md:hidden" dir="rtl">
+          {/* خلفية معتمة */}
+          <div className="absolute inset-0 bg-black/50" onClick={() => setIsDrawerOpen(false)}></div>
+          
+          {/* محتوى القائمة المنزلقة من اليمين */}
+          <div className="absolute right-0 top-0 h-full w-72 bg-white shadow-2xl p-6 flex flex-col gap-2 transform transition-transform duration-300">
+            <div className="flex justify-between items-center border-b pb-4 mb-4">
+              <h2 className="text-xl font-bold text-blue-600">القائمة</h2>
+              <button onClick={() => setIsDrawerOpen(false)} className="text-2xl text-gray-500">✕</button>
+            </div>
+            
+            {/* روابط المتجر في الجوال */}
+            {storeLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setIsDrawerOpen(false)} // إغلاق القائمة عند الضغط
+                className={`flex items-center gap-3 p-3 rounded-xl transition ${
+                  isActive(link.href) ? "bg-blue-50 text-blue-600 font-bold" : "text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <span className="text-xl">{link.icon}</span>
+                <span className="font-semibold">{link.label}</span>
+                {/* شارة العدد في الجوال */}
+                {link.badge !== undefined && link.badge > 0 && (
+                  <span className="mr-auto bg-red-500 text-white text-xs w-6 h-6 flex items-center justify-center rounded-full">
+                    {link.badge}
+                  </span>
+                )}
+              </Link>
+            ))}
 
-          <div className="flex gap-2 mt-2">
-            <Link href="/cart" className="flex-1 px-3 py-2 bg-transparent text-[#d4af37] border border-[#d4af37]/20 rounded-md transition transform duration-150 hover:scale-105 hover:bg-[#d4af37]/8">Cart</Link>
-            <Link href="/signin" className="flex-1 px-3 py-2 bg-[#d4af37] text-black rounded-md transition transform duration-150 hover:scale-105 hover:bg-[#b58f2a]">Sign in</Link>
+            {/* فاصل في الجوال */}
+            <hr className="my-3"/>
+
+            {/* روابط المستخدم في الجوال */}
+            {authLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                onClick={() => setIsDrawerOpen(false)} // إغلاق القائمة عند الضغط
+                className={`flex items-center gap-3 p-3 rounded-xl transition ${
+                  isActive(link.href) ? "bg-blue-50 text-blue-600 font-bold" : "text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                <span className="text-xl">{link.icon}</span>
+                <span className="font-semibold">{link.label}</span>
+              </Link>
+            ))}
           </div>
         </div>
-      </div>
+      )}
     </nav>
   );
 }
-  

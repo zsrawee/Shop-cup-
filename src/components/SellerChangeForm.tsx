@@ -4,7 +4,7 @@ import { useState, useTransition } from "react";
 import { becomeSeller, abandonSellerRole } from "@/actions/sellerActions";
 import Link from "next/link";
 
-export default function SellerChangeForm({ userId, currentRole }: { userId: string; currentRole: string }) {
+export default function SellerChangeForm({ currentRole }: { currentRole: string }) {
   const [isPending, startTransition] = useTransition();
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -13,7 +13,7 @@ export default function SellerChangeForm({ userId, currentRole }: { userId: stri
   // زر الترقية (بدون كلمة مرور)
   const handleBecomeSeller = () => {
     startTransition(async () => {
-      const res = await becomeSeller(userId);
+      const res = await becomeSeller();
       if (res?.success) {
         setIsNowSeller(true); // نعرض رسالة التهنئة
       }
@@ -26,7 +26,7 @@ export default function SellerChangeForm({ userId, currentRole }: { userId: stri
     setError("");
     
     startTransition(async () => {
-      const res = await abandonSellerRole(userId, password);
+      const res = await abandonSellerRole(password);
       if (res?.error) {
         setError(res.error);
       }
